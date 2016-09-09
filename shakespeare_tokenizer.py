@@ -82,3 +82,51 @@ def sequence_quatrain_couplet_lines(tokenizer, filename='shakespeare.txt'):
 
     return quatrains, couplets
 
+
+def syllable_count_and_has_stress(line, syllable_dict, stress_dict):
+    count = 0
+    stress = True
+    current_stress = 0
+    words = tokenize_sonnet(line)
+
+    for word in words:
+        for punc in PUNCTUATION:
+            word = word.replace(punc, '')
+        if word != '':
+            count += syllable_dict[word]
+            if stress_dict[word] != current_stress:
+                stress = False
+            current_stress = (current_stress + syllable_dict[word]) % 2
+
+    return count, stress
+
+
+def fix_sentence_mechanics(line):
+    # Capitalize the first word.
+    words = line.split(' ')
+    words[0] = words[0].capitalize()
+
+    # Capitalize the word 'I'.
+    for i in range(len(words)):
+        if words[i] == 'i':
+            words[i] = 'I'
+
+    # Capitalize the first word of sentences.
+    for i in range(len(words)-1, 0, -1):
+        prev = words[i-1]
+        if prev[-1] in ['!', '.', '?']:
+            words[i] = words[i].capitalize()
+
+    return ' '.join(words)
+
+
+def load_syllable_stress_dicts():
+    syllable_file = open(SYLLABLE_DICT, 'rb')
+    syllable_dict = pickle.load(syllable_file)
+    syllable_file.close()
+
+    stress_file = open(STRESS_DICT, 'rb')
+    stress_dict = pickle.load(stress_file)
+    stress_file.close()
+
+    return syllable_dict, stress_dict
