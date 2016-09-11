@@ -41,7 +41,24 @@ class HiddenMarkovModel:
         return (self.token_dict, self.P_init, self.P, self.E)
 
     def _transform_observations(self, data):
-        pass
+        """Transform observation data to integers corresponding to tokens.
+        
+        """
+        self.num_obs = 0
+        token_to_index = {}
+        X = []
+
+        for sequence in data:
+            X_i = []
+            for token in sequence:
+                if token not in token_to_index:
+                    token_to_index[token] = self.num_obs
+                    self.num_obs += 1
+                X_i.append(token_to_index[token])
+            X.append(X_i)
+
+        self.token_dict = {v: k for k, v in token_to_index.items()}
+        return X
 
     @staticmethod
     def _normalize(matrix):
@@ -58,4 +75,4 @@ class HiddenMarkovModel:
        pass
 
     def _update(self, X, gammas, xis):
-       pass 
+        pass
