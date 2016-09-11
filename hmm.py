@@ -69,10 +69,98 @@ class HiddenMarkovModel:
         return matrix / sums.reshape(sums.shape[0], 1)
 
     def _compute_marginals(self, X, scaling=True):
-        pass
+        # Calculate alphas and betas for all sequences.
+        alphas = []
+        betas = []
+        for sequence in X:
+            alpha, beta = self._forward_backward_algorithm(sequence, scaling)
+            alphas.append(alpha)
+            betas.append(beta)
+
+        # Compute gammas for all sequences.
+        # P(Y_i = z)
+        # Indexed by: sequence index, position, state
+        gammas = []
+        for i in range(len(X)):
+            seq_len = len(X[i])
+            alpha = alphas[i]
+            beta = betas[i]
+
+            # Gamma for this sequence.
+            gamma = np.zeros((seq_len, self.num_states))
+            for j in range(seq_len):
+                for state in range(self.num_states):
+                    gamma[j, state] = alpha[j, state] + beta[j, state]
+                gamma[j] = gamma[j] / gamma[j].sum()
+            gammas.append(gamma)
+
+        # Compute xis for all sequences.
+        # P(Y_i = prev, Y_i+1 = next)
+        # Indexed by: sequence index, prev position, prev state, next state
+        xis = []
+        for i in range(len(X)):
+            seq = X[i]
+            seq_len = len(seq)
+            alpha = alphas[i]
+            beta = betas[j]
+
+            # Xi for this sequence.
+            xi = np.zeros((seq_len-1, self.num_states, self.num_states))
+            for j in range(seq_len-1):
+                for prev_state in range(self.num_states):
+                    for next_state in range(self.num_states):
+                        xi[j, prev_state, next_state] = (
+                            alpha[j, prev_state] *
+                            self.E[next_state, seq[j+1]] *
+                            self.P[prev_state, next_state] *
+                            beta[j+1, next_state]
+                        )
+                xi[j] = xi[j] / xi[j].sum()
+            xis.append(xi)
 
     def _forward_backward_algorithm(self, sequence, scaling):
-       pass
+        seq_len = len(sequence)
+        alphas =    np.zeros((seq_len, self.num_states))
+        betas = np.zeros((seq_len, self.num_states))
+
+        # FORWARD
+        for i in range(seq_len):
+            for state in range(self.num_states):
+                # Base Case
+                if i == 0:
+                        alphas[i, state] = (self.E[state, sequence[0]] *
+                                            self.P_init[state])
+                else:
+                    prob_sum = 0
+                    for prev_state in range(self.num_states):
+                        prob_sum += (alphas[i-1, prev_state] *
+                                     self.P[prev_state, state])
+                    alphas[i, state] = prob_sum * self.E[state, sequence[i]]
+
+            # Scaling
+            if scaling:
+                scale = np.sum(alphas[i])
+                alphas[i] = alphas[i] / scale
+
+        # BACKWARD
+        for i in reversed(range(seq_len)):
+            for state in range(self.num_states):
+                # Base Case
+                if  i == (seq_len - 1):
+                    betas[i, state] = 1
+                else:
+                    for next_state in range(self.num_states):
+                        betas[i, state] += (betas[i+1, next_state] *
+                                            self.P[state, next_state] *
+                                            self.E[next_state, sequence[i+1]])
+
+            # Scaling
+            if scaling:
+                scale = np.sum(betas[i])
+                betas[i] = betas[i] / scale
+
+        return (alphas, betas)
+ 
 
     def _update(self, X, gammas, xis):
         pass
