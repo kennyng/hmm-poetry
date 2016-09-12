@@ -42,7 +42,7 @@ class HiddenMarkovModel:
 
     def _transform_observations(self, data):
         """Transform observation data to integers corresponding to tokens.
-        
+
         """
         self.num_obs = 0
         token_to_index = {}
@@ -160,7 +160,73 @@ class HiddenMarkovModel:
                 betas[i] = betas[i] / scale
 
         return (alphas, betas)
- 
+
 
     def _update(self, X, gammas, xis):
-        pass
+        # Initialize new matrices.
+        P_init = np.zeros(self.P_init.shape)
+        P = np.zeros(self.P.shape)
+        E = np.zeros(self.E.shape)
+
+        # Update initial distribution matrix, P_init.
+        for state in range(self.num_states):
+            prob_sum = 0
+            # Iterate over all sequences.
+            for i in range(len(X)):
+                prob_sum += gammas[i][0, state]
+
+            # Initial distribution is the average across all sequences.
+            P_init[state] = prob_sum / len(X)
+
+        # Check that (matrix rows) probabilities sum to 1.
+        np.testing.assert_almost_equal(P_init.sum(), 1)
+
+        # Update transition probability matrix, P.
+        for prev_state in range(self.num_states):
+            for next_state in range(self.num_states):
+                numerator = 0
+                denominator = 0
+
+                # Iterate over each sequence.
+                for i in range(len(X)):
+                    # Iterate over each index in sequence (skip last index).
+                    for j in range(len(X[i])-1):
+                        numerator += xis[i][j, prev_state, next_state]
+                        denominator += gammas[i][j, prev_state]
+
+                # Update P(prev_state, next_state).
+                P[prev_state, next_state] = numerator / denominator
+
+            # Check that probabilities sum to 1.
+            np.testing.assert_almost_equal(P[prev_state].sum(), 1)
+
+
+        # Update observation (emission) matrix, E.
+        for state in range(self.num_states):
+            for token in range(self.num_obs):
+                numerator = 0
+                denominator = 0
+
+                # Iterate over each sequence.
+                for i in range(len(X)):
+                    for j in range(len(X[i])):
+                        probability = gammas[j][i, state]
+                        if X[j][i] == token:  #Indicator function
+                            numerator += probability
+                        denominator += probability
+                E[state, token] = numerator / denominator
+
+            # Check that (matrix rows) probabilities sum to 1.
+            np.testing.assert_almost_equal(E[state].sum(), 1)
+
+        # Calculate Frobenius norm of the differences between
+        # initial and updated matrices.
+        diff_norm = (np.linalg.norm(self.P - P) + np.linalg.norm(self.E - E) +
+                     np.linalg.norm(self.P_init - P_init))
+
+        # Update matrices.
+        self.P_init = P_init
+        self.P = P
+        self.E = E
+
+        return diff_norm
