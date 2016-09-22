@@ -23,7 +23,7 @@ class HiddenMarkovModel:
         self.A = None
         self.B = None
 
-    def train(self, data, epsilon=0.01, scale=True):
+    def train(self, data, epsilon=0.01, max_iter=100, scale=True):
         """Train HMM using the standard Baum-Welch (EM) algorithm.
 
         The EM (expectation-maximization) algorithm is an iterative process
@@ -34,6 +34,9 @@ class HiddenMarkovModel:
             epsilon: A float used to calculate the stopping condition for
                      algorithm to converge (when ratio between updated norm
                      and initial norm is less than epsilon).
+            max_iter: An integer representing the maximum number of iterations
+                      that the algorithm should run.
+                      [Set max_iter=0 for indefinite number of iterations.]
             scale: A boolean indicating whether to normalize probability vectors.
 
         Returns:
@@ -61,8 +64,9 @@ class HiddenMarkovModel:
             print(updated_norm)
             norms.append(updated_norm)
 
-            # Stopping Condition
-            if len(norms) > 1 and norms[-1] / norms[0] < epsilon:
+            # Stopping Conditions
+            if (len(norms) > 1 and norms[-1] / norms[0] < epsilon or
+                    iterations > max_iter):
                 print('Number of Iterations: {}'.format(iterations))
                 break
 
