@@ -9,12 +9,23 @@ NUM_QUATRAINS = 3
 QUATRAIN_LINES = 4
 COUPLET_LINES = 2
 
+SONNET_FILEPATH = 'data/shakespeare.txt'
+
 
 def tokenize(line):
-    """Tokenize sonnet lines into sequence of words.
+    """Parse sonnet lines and tokenize on words.
+
+    Tokenization rules:
+        - For standardization, all lines are in lowercase.
+        - Newline characters are removed.
+        - Hyphenated words are kept as single words
+            (to prevent random words to be hyphenated together).
+        - Ending punctuation is attached to the word to its left
+            (this can help the model learn the positioning
+             of words with punctuation).
 
     Args:
-        line: single sonnet line as string.
+        line: A string representing a single sonnet line.
 
     Returns:
         Formatted sonnet line with punctuation attached to word on the left
@@ -27,18 +38,19 @@ def tokenize(line):
 
 
 # TRAINING SEQUENCES
-def process_sonnet_lines(tokenizer, filename='data/shakespeare.txt'):
-    """Process sonnets by splitting text on a per-line basis.
+def sequence_each_line(tokenizer, filename=SONNET_FILEPATH):
+    """Split sonnets into training sequences on a per-line basis.
 
     Args:
-        tokenizer: function for tokenizing each sonnet line.
-        filename: text file of sonnets.
+        tokenizer: A function for tokenizing each sonnet line.
+        filename: A string representing the path to the sonnets text file.
 
     Returns:
-        List of tokenized sonnet lines.
+        List of training sequences, where each sequence is
+        a tokenized sonnet line.
 
     """
-    data = load_raw_text(filename)
+    data = _load_raw_text(filename)
     lines = []
     cursor = 0
 
@@ -52,20 +64,21 @@ def process_sonnet_lines(tokenizer, filename='data/shakespeare.txt'):
     return lines
 
 
-def process_quatrains_couplets(tokenizer, filename='data/shakespeare.txt'):
-    """Process sonnets by splitting text into quatrains and couplets.
+def sequence_quatrains_couplets(tokenizer, filename=SONNET_FILEPATH):
+    """Split sonnets into training sequences as sets of quatrains and couplets.
 
-    Each sonnet line from a quatrain is added to a set of quatrain lines
-    and each sonnet line from a couplet is added to a set of couplet lines.
+    Sonnets are split into quatrains and couplets, and then quatrains and
+    couplets are split on a per-line basis.
 
     Args:
-        tokenizer: function for tokenizing each sonnet line.
-        filename: text file of sonnets.
+        tokenizer: A function for tokenizing each sonnet line.
+        filename: A string representing the path to the sonnets text file.
 
     Returns:
-        Two lists - a set of quatrain lines and a set of couplet lines.
+        Two lists of training sequences: a set of all lines of all
+        the quatrainss and a set of all lines of all the couplets.
     """
-    data = load_raw_text(filename)
+    data = _load_raw_text(filename)
     quatrains = []
     couplets = []
     cursor = 0
@@ -83,11 +96,46 @@ def process_quatrains_couplets(tokenizer, filename='data/shakespeare.txt'):
     return quatrains, couplets
 
 
-def _load_raw_text(filename='data/shakespeare.txt'):
+def process_rhymes(filename=SONNET_FILEPATH):
+    """Compile lists of rhyming pairs from the sonnets text.
+
+    Args:
+        filename: A string representing the path to the sonnets text file.
+
+    Returns:
+        A list of tuples containing rhyming pairs from all the quatrains
+        ans a list of tuples containing rhyming pairs from all the couplets.
+
+    """
+    data = _load_raw_text(filename)
+    quatrain_rhymes = []
+    couplet_rhymes = []
+    cursor = 0
+
+    for sonnet in range(NUM_SHAKESPEARE_SONNETS):
+        cursor += 1
+        for quatrain in range(NUM_QUATRAINS):
+            line0 = tokenize(data[cursor])
+            line1 = tokenize(data[cursor + 1])
+            line2 = tokenize(data[cursor + 2])
+            line3 = tokenize(data[cursor + 3])
+            quatrain_rhymes.append((line0[-1], line2[-1]))
+            quatrain_rhymes.append((line1[-1], line3[-1]))
+            cursor += 4
+
+        line0 = tokenize(data[cursor])
+        line1 = tokenize(data[cursor + 1])
+        couplet_rhymes.append((line0[-1], line1[-1]))
+        cursor += 2
+
+    return quatrain_rhymes, couplet_rhymes
+
+
+def _load_raw_text(filename=SONNET_FILEPATH):
     """Read in raw text of Shakespeare sonnets.
 
     Args:
-        filename: text file of sonnets.
+        filename: A string representing the path to the sonnets text file.
 
     Returns:
         Numpy array of sonnet data (lines) read from file.
