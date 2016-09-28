@@ -38,7 +38,7 @@ def tokenize(line):
 
 
 # TRAINING SEQUENCES
-def sequence_each_line(tokenizer, filename=SONNET_FILEPATH):
+def sequence_each_line(filename=SONNET_FILEPATH):
     """Split sonnets into training sequences on a per-line basis.
 
     Args:
@@ -58,13 +58,13 @@ def sequence_each_line(tokenizer, filename=SONNET_FILEPATH):
         # Skip first line (which is a number).
         cursor += 1
         for i in range(SONNET_LINES):
-            lines.append(tokenizer(data[cursor]))
+            lines.append(tokenize(data[cursor]))
             cursor += 1
 
     return lines
 
 
-def sequence_quatrains_couplets(tokenizer, filename=SONNET_FILEPATH):
+def sequence_quatrains_couplets(filename=SONNET_FILEPATH):
     """Split sonnets into training sequences as sets of quatrains and couplets.
 
     Sonnets are split into quatrains and couplets, and then quatrains and
@@ -87,10 +87,10 @@ def sequence_quatrains_couplets(tokenizer, filename=SONNET_FILEPATH):
         cursor += 1
         for quatrain in range(NUM_QUATRAINS):
             for line in range(QUATRAIN_LINES):
-                quatrains.append(tokenizer(data[cursor]))
+                quatrains.append(tokenize(data[cursor]))
                 cursor += 1
         for line in range(COUPLET_LINES):
-            couplets.append(tokenizer(data[cursor]))
+            couplets.append(tokenize(data[cursor]))
             cursor += 1
 
     return quatrains, couplets
@@ -131,6 +131,25 @@ def process_rhymes(filename=SONNET_FILEPATH):
     return quatrain_rhymes, couplet_rhymes
 
 
+def process_word_frequency(filename=SONNET_FILEPATH):
+    data = _load_raw_text(filename)
+    word_count = {}
+    cursor = 0
+    
+    for sonnet in range(NUM_SHAKESPEARE_SONNETS):
+        cursor += 1
+        for i in range(SONNET_LINES):
+            words = tokenize(data[cursor])
+            for word in words:
+                if word_count.get(word) is not None:
+                    word_count[word] += 1
+                else:
+                    word_count[word] = 1
+            cursor += 1
+    
+    return word_count
+
+    
 def _load_raw_text(filename=SONNET_FILEPATH):
     """Read in raw text of Shakespeare sonnets.
 
