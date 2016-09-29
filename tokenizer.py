@@ -24,10 +24,14 @@ def tokenize(line):
             (this can help the model learn the positioning
              of words with punctuation).
 
-    Args:
-        line: A string representing a single sonnet line.
+    Parameters
+    ----------
+    line : str
+        A single sonnet line.
 
-    Returns:
+    Returns
+    -------
+    line : str
         Formatted sonnet line with punctuation attached to word on the left
         and newline characters removed.
 
@@ -41,11 +45,14 @@ def tokenize(line):
 def sequence_each_line(filename=SONNET_FILEPATH):
     """Split sonnets into training sequences on a per-line basis.
 
-    Args:
-        tokenizer: A function for tokenizing each sonnet line.
-        filename: A string representing the path to the sonnets text file.
+    Parameters
+    ----------
+    filename : str
+        File path to the sonnets text file.
 
-    Returns:
+    Returns
+    -------
+    lines : list
         List of training sequences, where each sequence is
         a tokenized sonnet line.
 
@@ -70,13 +77,18 @@ def sequence_quatrains_couplets(filename=SONNET_FILEPATH):
     Sonnets are split into quatrains and couplets, and then quatrains and
     couplets are split on a per-line basis.
 
-    Args:
-        tokenizer: A function for tokenizing each sonnet line.
-        filename: A string representing the path to the sonnets text file.
+    Parameters
+    ----------
+    filename : str
+        File path to the sonnets text file.
 
-    Returns:
-        Two lists of training sequences: a set of all lines of all
-        the quatrainss and a set of all lines of all the couplets.
+    Returns
+    -------
+    quatrains : list
+        Training seqeunces of all lines from quatrains.
+    couplets : list
+        Training sequences of all lines from couplets.
+
     """
     data = _load_raw_text(filename)
     quatrains = []
@@ -99,12 +111,17 @@ def sequence_quatrains_couplets(filename=SONNET_FILEPATH):
 def process_rhymes(filename=SONNET_FILEPATH):
     """Compile lists of rhyming pairs from the sonnets text.
 
-    Args:
-        filename: A string representing the path to the sonnets text file.
+    Parameters
+    ----------
+    filename : str
+        File path to the sonnets text file.
 
-    Returns:
-        A list of tuples containing rhyming pairs from all the quatrains
-        ans a list of tuples containing rhyming pairs from all the couplets.
+    Returns
+    -------
+    quatrain_rhymes : list
+        Pairs of rhyming lines (in tuples) from all the quatrains.
+    couplet_rhymes : list
+        Pairs of rhyming lines (in tuples) from all the couplets.
 
     """
     data = _load_raw_text(filename)
@@ -132,10 +149,23 @@ def process_rhymes(filename=SONNET_FILEPATH):
 
 
 def process_word_frequency(filename=SONNET_FILEPATH):
+    """Count frequency of words in all sonnets.
+
+    Parameters
+    ----------
+    filename : str
+        File path to the sonnets text file.
+
+    Returns
+    -------
+    word_count : dict
+        Mapping of words to freqeuncy count.
+
+    """
     data = _load_raw_text(filename)
     word_count = {}
     cursor = 0
-    
+
     for sonnet in range(NUM_SHAKESPEARE_SONNETS):
         cursor += 1
         for i in range(SONNET_LINES):
@@ -146,18 +176,22 @@ def process_word_frequency(filename=SONNET_FILEPATH):
                 else:
                     word_count[word] = 1
             cursor += 1
-    
+
     return word_count
 
-    
+
 def _load_raw_text(filename=SONNET_FILEPATH):
     """Read in raw text of Shakespeare sonnets.
 
-    Args:
-        filename: A string representing the path to the sonnets text file.
+    Parameters
+    ----------
+    filename : str
+        File path to the sonnets text file.
 
-    Returns:
-        Numpy array of sonnet data (lines) read from file.
+    Returns
+    -------
+    data : numpy.array
+        Sonnet data (lines) read from file.
 
     """
     data = np.loadtxt(filename, delimiter='\n', dtype='str')

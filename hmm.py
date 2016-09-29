@@ -4,14 +4,21 @@ import numpy as np
 class HiddenMarkovModel:
     """Hidden Markov Model implementation.
 
-    Attributes:
-        num_obs: An integer count of the number of unique observations.
-        num_states: An integer specifying the number of state in the model.
-        token_dict: A dictionary mapping tokens to integers.
-        PI: Initial state distribution vector.
-        A: Transition probabilities matrix [row: FROM, col: TO].
-        B: Emission probabilities (observation likelihoods) matrix
-            [row: STATE, col: OBSERVATION].
+    Attributes
+    ----------
+    num_obs : int
+        Count of unique observations.
+    num_states: int
+        Number of states in the model.
+    token_dict : dict
+        Mapping from tokens to observation indices (int).
+    PI: numpy.array
+        Initial state distribution vector.
+    A: numpy.array
+        Transition probabilities matrix [row: FROM, col: TO].
+    B: numpy.array
+        Emission probabilities (observation likelihoods) matrix
+        [row: STATE, col: OBSERVATION].
 
     """
 
@@ -29,20 +36,30 @@ class HiddenMarkovModel:
         The EM (expectation-maximization) algorithm is an iterative process
         that updates a set of HMM parameter estimates (A, B) until convergence.
 
-        Args:
-            data: A list of training sequences (observation data).
-            epsilon: A float used to calculate the stopping condition for
-                     algorithm to converge (when ratio between updated norm
-                     and initial norm is less than epsilon).
-            max_iter: An integer representing the maximum number of iterations
-                      that the algorithm should run.
-                      [Set max_iter=0 for indefinite number of iterations.]
-            scale: A boolean indicating whether to normalize probability vectors.
+        Parameters
+        ----------
+        data : list
+            List of training sequences (observation data).
+        epsilon : float
+            Value for calculating the stopping condition for the algorithm
+            to converge (when ratio between updated norm and initial norm
+            is less than epsilon).
+        max_iter : int
+            Maximum number of iterations that the algorithm should run.
+            (Set max_iter=0 for indefinite number of iterations.)
+        scale : bool
+            Indicates whether to normalize probability vectors.
 
-        Returns:
-            A dictionary mapping tokens to integers, the initial state
-            distribution vector, the transition matrix, and the emission
-            matrix of the final trained model.
+        Returns
+        -------
+        A : numpy.array
+            Transition probabilities matrix of trained model.
+        B : numpy.array
+            Emission probabilities matrix of trained model.
+        PI : numpy.array
+            Initial state distribution vector of trained model.
+        token_dict : dict
+            Mapping from tokens to observation indices (int).
 
         """
         X = self.transform_observations(data)
@@ -70,7 +87,7 @@ class HiddenMarkovModel:
                 print('Number of Iterations: {}'.format(iterations))
                 break
 
-        return (self.A, self.B, self.PI, self.token_dict)
+        return self.A, self.B, self.PI, self.token_dict
 
     @staticmethod
     def normalize(matrix):
@@ -83,12 +100,16 @@ class HiddenMarkovModel:
     def transform_observations(self, data):
         """Transform observation sequences to integers corresponding to tokens.
 
-        Args:
-            data: A list of training sequences (tokenized observation data).
+        Parameters
+        ----------
+        data : list
+            List of training sequences (tokenized observation data).
 
-        Returns:
-            A list of lists (observation sequences) where observation
-            (tokens) are mapped to integers.
+        Returns
+        =======
+        X : list
+            List of observation sequences (lists) where observations (tokens)
+            are mapped to indices (int).
 
         """
         self.num_obs = 0
@@ -111,16 +132,20 @@ class HiddenMarkovModel:
 
         To do so, four main variables are calculated: Alpha, Beta, Gamma, Xi.
 
-        Args:
-            X: A list of lists (observation sequences) where observation
-               (tokens) are mapped to integers.
-            scale: A boolean indicating whether to normalize probability vectors.
+        Parameters
+        ----------
+        X : list
+            List of observation sequences where observations (tokens) are
+            mapped to integers.
+        scale : bool
+            Indicates whether to normalize probability vectors.
 
-        Returns:
-            A tuple, (gammas, xis), where gammas and xis are lists of
-            matrices containing the following:
-                gammas: probability estimates of hidden state at each observation.
-                xis: state transition probabilty estimates at each observation.
+        Returns
+        -------
+        gammas : list
+            Probability estimates of hidden state at each observation.
+        xis : list
+            State transition probabilty estimates at each observation.
 
         """
         alphas = []
@@ -133,7 +158,7 @@ class HiddenMarkovModel:
         gammas = self._compute_gammas(X, alphas, betas)
         xis = self._compute_xis(X, alphas, betas)
 
-        return (gammas, xis)
+        return gammas, xis
 
     def _forward_backward_algorithm(self, sequence, scale):
         """Computes posterior marginals (Alpha and Beta) of all hidden states.
@@ -147,14 +172,19 @@ class HiddenMarkovModel:
         Backward Procedure: backward probabilities (Beta) are calculated as
             conditional probabilities starting from the last data observation.
 
-        Args:
-            sequence: A list of observations (a single sequence).
-            scale: A boolean indicating whether to normalize probability vectors.
+        Parameters
+        ----------
+        sequence : list
+            List of observations (a single sequence).
+        scale : bool
+            Indicates whether to normalize probability vectors.
 
-        Returns:
-            A tuple, (alpha, beta), where alpha and beta are matrices
-                containing the (forward and backward) posterior marginal
-                probabilities.
+        Returns
+        -------
+        alpha : numpy.array
+            Forward probabilities.
+        beta : numpy.array
+            Backward probabilities.
 
         """
         num_obs = len(sequence)
@@ -191,7 +221,7 @@ class HiddenMarkovModel:
                 factor = np.sum(beta[i])
                 beta[i] = beta[i] / factor
 
-        return (alpha, beta)
+        return alpha, beta
 
     def _compute_gammas(self, X, alphas, betas):
         """Compute probability estimates of hidden state at each observation.
@@ -199,16 +229,22 @@ class HiddenMarkovModel:
         Gamma(i) = Pr(Q_t = i | X) and is calculated using results
         (Alpha and Beta) from Forward-Backward algorithm.
 
-         Args:
-            X: A list of lists (observation sequences) where observation
-               (tokens) are mapped to integers.
-            alphas: A list of matrices containing forward probabilities for each
-                    observation sequence.
-            betas: A list of matrices containing backward probabilities for each
-                    observation sequence.
+        Parameters
+        ----------
+        X : list
+            List of observation sequences where observations (tokens)
+            are mapped to integers.
+        alphas : list
+            List of numpy.array containing forward probabilities for
+            each observation sequence.
+        betas: list
+            List of numpy.array containing backward probabilities for
+            each observation sequence.
 
-        Returns:
-            A list of matrices containting the probability estimates of
+        Returns
+        -------
+        gammas : list
+            List of numpy.array containing the probability estimates of
             the hidden state at each observation.
             Gammas indexed by: sequence index, position, state.
 
@@ -234,17 +270,23 @@ class HiddenMarkovModel:
         Xi(i, j) = Pr(Q_t = i, Q_t+1 = j | X) and is calculated using
         the results (Alpha and Beta) from the Forward-Backward algorithm.
 
-        Args:
-            X: A list of lists (observation sequences) where observation
-                (tokens) are mapped to integers.
-            alphas: A list of matrices containing forward probabilities for each
-                    observation sequence.
-            betas: A list of matrices containing backward probabilities for each
-                    observation sequence.
+        Parameters
+        ----------
+        X : list
+            List of observation sequences where observations (tokens)
+            are mapped to integers.
+        alphas : list
+            List of numpy.array containing forward probabilities for
+            each observation sequence.
+        betas: list
+            List of numpy.array containing backward probabilities for
+            each observation sequence.
 
-        Returns:
-            A list of matrices containting the probability estimates of
-            the hidden state at each observation.
+        Returns
+        -------
+        xis : list
+            List of numpy.array containing the state transition
+            probability estimates at each observation.
             Xis indexed by: sequence index, previous position,
                             previous state, next state.
 
@@ -274,15 +316,21 @@ class HiddenMarkovModel:
     def update(self, X, gammas, xis):
         """Updates HMM parameters (A, B, PI) to maximize Pr(X | A,B,PI).
 
-        Args:
-            X: A list of lists (observation sequences) where observation
-               (tokens) are mapped to integers.
-            gammas: A list of matrices containting the probability estimates of
-                    the hidden state at each observation.
-            xis: A list of matrices containting the probability estimates of
-                 the hidden state at each observation.
+        Parameters
+        ----------
+        X : list
+            List of observation sequences where observations (tokens)
+            are mapped to integers.
+        gammas : list
+            List of numpy.array containting the probability estimates of
+            the hidden state at each observation.
+        xis : list
+            List of numpy.array containting the state transition probability
+            estimates at each observation.
 
-        Returns:
+        Returns
+        -------
+        norm : float
             Frobenius norm of the change between initial and updated matrices.
 
         """
@@ -304,14 +352,19 @@ class HiddenMarkovModel:
     def _update_init_probs(self, X, gammas):
         """Update initial state distribution vector.
 
-        Args:
-            X: A list of lists (observation sequences) where observation
-               (tokens) are mapped to integers.
-            gammas: A list of matrices containting the probability estimates of
-                    the hidden state at each observation.
+        Parameters
+        ----------
+        X : list
+            List of observation sequences where observations (tokens)
+            are mapped to integers.
+        gammas : list
+            List of numpy.array containting the probability estimates of
+            the hidden state at each observation.
 
-        Returns:
-            Updated initial state distribution vector, PI.
+        Returns
+        -------
+        PI : numpy.array
+            Updated initial state distribution vector.
 
         """
         PI = np.zeros(self.PI.shape)
@@ -329,16 +382,22 @@ class HiddenMarkovModel:
     def _update_transition_probs(self, X, gammas, xis):
         """Update transition probability matrix.
 
-        Args:
-            X: A list of lists (observation sequences) where observation
-               (tokens) are mapped to integers.
-            gammas: A list of matrices containting the probability estimates of
-                    the hidden state at each observation.
-            xis: A list of matrices containting the probability estimates of
-                 the hidden state at each observation.
+        Parameters
+        ----------
+        X : list
+            List of observation sequences where observations (tokens)
+            are mapped to integers.
+        gammas : list
+            List of numpy.array containting the probability estimates of
+            the hidden state at each observation.
+        xis : list
+            List of numpy.array containting the state transition probability
+            estimates at each observation.
 
-        Returns:
-            Updated transition probability matrix, A.
+        Returns
+        -------
+        A : numpy.array
+            Updated transition probability matrix.
 
         """
         A = np.zeros(self.A.shape)
@@ -366,8 +425,10 @@ class HiddenMarkovModel:
             gammas: A list of matrices containting the probability estimates of
                     the hidden state at each observation.
 
-        Returns:
-            Updated emission probability matrix, B.
+        Returns
+        -------
+        B : numpy.array
+            Updated emission probability matrix.
 
         """
         B = np.zeros(self.B.shape)
