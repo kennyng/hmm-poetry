@@ -1,6 +1,3 @@
-import numpy as np
-
-
 # Sonnets 99, 126, 145 removed due to format deviations.
 NUM_SHAKESPEARE_SONNETS = 151
 # SONNET FORMAT:
@@ -9,10 +6,11 @@ NUM_QUATRAINS = 3
 QUATRAIN_LINES = 4
 COUPLET_LINES = 2
 
+PUNCTUATION = [',', ':', '.', ';', '?', '!', '(', ')', "'", '"']
 SONNET_FILEPATH = 'data/shakespeare.txt'
 
 
-def tokenize(line):
+def tokenize_lpunc(line):
     """Parse sonnet lines and tokenize on words.
 
     Tokenization rules:
@@ -41,12 +39,43 @@ def tokenize(line):
     return line
 
 
+def tokenize_nopunc(line):
+    """Parse sonnet lines and tokenize on words.
+
+    Tokenization rules:
+        - For standardization, all lines are in lowercase.
+        - Newline characters are removed.
+        - Hyphenated words are kept as single words
+            (to prevent random words to be hyphenated together).
+        - All punctuation is removed.
+
+    Parameters
+    ----------
+    line : str
+        A single sonnet line.
+
+    Returns
+    -------
+    line : str
+        Formatted sonnet line with punctuation attached to word on the left
+        and newline characters removed.
+
+    """
+    line = line.lower().lstrip().rstrip()
+    for punc in PUNCTUATION:
+        line = line.replace(punc, '')
+    line = line.split(' ')
+    return line
+
+
 # TRAINING SEQUENCES
-def sequence_each_line(filename=SONNET_FILEPATH):
+def sequence_each_line(tokenize, filename=SONNET_FILEPATH):
     """Split sonnets into training sequences on a per-line basis.
 
     Parameters
     ----------
+    tokenizer : function
+        Function that parses sonnet lines into tokens.
     filename : str
         File path to the sonnets text file.
 
@@ -71,7 +100,7 @@ def sequence_each_line(filename=SONNET_FILEPATH):
     return lines
 
 
-def sequence_quatrains_couplets(filename=SONNET_FILEPATH):
+def sequence_quatrains_couplets(tokenize, filename=SONNET_FILEPATH):
     """Split sonnets into training sequences as sets of quatrains and couplets.
 
     Sonnets are split into quatrains and couplets, and then quatrains and
@@ -79,6 +108,8 @@ def sequence_quatrains_couplets(filename=SONNET_FILEPATH):
 
     Parameters
     ----------
+    tokenizer : function
+        Function that parses sonnet lines into tokens.
     filename : str
         File path to the sonnets text file.
 
@@ -108,6 +139,7 @@ def sequence_quatrains_couplets(filename=SONNET_FILEPATH):
     return quatrains, couplets
 
 
+# MISCELLANEOUS SONNET PROCESSING
 def process_rhymes(filename=SONNET_FILEPATH):
     """Compile lists of rhyming pairs from the sonnets text.
 
@@ -132,16 +164,16 @@ def process_rhymes(filename=SONNET_FILEPATH):
     for sonnet in range(NUM_SHAKESPEARE_SONNETS):
         cursor += 1
         for quatrain in range(NUM_QUATRAINS):
-            line0 = tokenize(data[cursor])
-            line1 = tokenize(data[cursor + 1])
-            line2 = tokenize(data[cursor + 2])
-            line3 = tokenize(data[cursor + 3])
+            line0 = tokenize_lpunc(data[cursor])
+            line1 = tokenize_lpunc(data[cursor + 1])
+            line2 = tokenize_lpunc(data[cursor + 2])
+            line3 = tokenize_lpunc(data[cursor + 3])
             quatrain_rhymes.append((line0[-1], line2[-1]))
             quatrain_rhymes.append((line1[-1], line3[-1]))
             cursor += 4
 
-        line0 = tokenize(data[cursor])
-        line1 = tokenize(data[cursor + 1])
+        line0 = tokenize_lpunc(data[cursor])
+        line1 = tokenize_lpunc(data[cursor + 1])
         couplet_rhymes.append((line0[-1], line1[-1]))
         cursor += 2
 
@@ -169,7 +201,7 @@ def process_word_frequency(filename=SONNET_FILEPATH):
     for sonnet in range(NUM_SHAKESPEARE_SONNETS):
         cursor += 1
         for i in range(SONNET_LINES):
-            words = tokenize(data[cursor])
+            words = tokenize_lpunc(data[cursor])
             for word in words:
                 if word_count.get(word) is not None:
                     word_count[word] += 1
@@ -190,9 +222,13 @@ def _load_raw_text(filename=SONNET_FILEPATH):
 
     Returns
     -------
-    data : numpy.array
+    data : list
         Sonnet data (lines) read from file.
 
     """
-    data = np.loadtxt(filename, delimiter='\n', dtype='str')
+    data = []
+    with open(filename, 'r') as fp:
+        for line in fp:
+            if line is not None and line != '\n':
+                data.append(line)
     return data
