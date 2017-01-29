@@ -10,9 +10,6 @@ __pycache__/
 .ipynb_checkpoints
 *.ipynb
 
-# Vim swap file
-*.swp
-
 # Models
 *.p
 
