@@ -11,7 +11,11 @@ __pycache__/
 *.ipynb
 
 # Models
-*.p
+!models/
+models/*
+!models/README.md
+!models/test/
+
 
 # Scripts
 scripts/
