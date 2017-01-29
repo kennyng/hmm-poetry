@@ -9,7 +9,7 @@ __pycache__/
 # IPython Notebook
 .ipynb_checkpoints
 *.ipynb
-!Train-HMM.ipynb
+!hmm-test.ipynb
 
 # Models
 !models/
