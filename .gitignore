@@ -1,4 +1,4 @@
-# Byte-compiled / optimized / DLL files
+#Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -9,6 +9,7 @@ __pycache__/
 # IPython Notebook
 .ipynb_checkpoints
 *.ipynb
+!Train-HMM.ipynb
 
 # Models
 !models/
@@ -16,6 +17,9 @@ models/*
 !models/README.md
 !models/test/
 
+# Data
+data/stress_dict.p
+data/syllable_dict.p
 
 # Scripts
 scripts/
