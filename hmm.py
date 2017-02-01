@@ -1,3 +1,11 @@
+##############################################################################
+# hmm.py
+# ------
+# General Hidden Markov Model implementation.
+# Trains HMM using the standard Baum-Welch (EM) algorithm.
+#
+##############################################################################
+
 import numpy as np
 
 
@@ -200,7 +208,7 @@ class HiddenMarkovModel:
                 else:
                     prob_sum = 0
                     for prev_state in range(self.num_states):
-                        prob_sum += (alpha[i-1, prev_state] *
+                        prob_sum += (alpha[i - 1, prev_state] *
                                      self.A[prev_state, state])
                     alpha[i, state] = prob_sum * self.B[state, sequence[i]]
             if scale:
@@ -210,13 +218,13 @@ class HiddenMarkovModel:
         # BACKWARD Procedure
         for i in reversed(range(num_obs)):
             for state in range(self.num_states):
-                if  i == (num_obs - 1):
+                if i == (num_obs - 1):
                     beta[i, state] = 1
                 else:
                     for next_state in range(self.num_states):
-                        beta[i, state] += (beta[i+1, next_state] *
+                        beta[i, state] += (beta[i + 1, next_state] *
                                            self.A[state, next_state] *
-                                           self.B[next_state, sequence[i+1]])
+                                           self.B[next_state, sequence[i + 1]])
             if scale:
                 factor = np.sum(beta[i])
                 beta[i] = beta[i] / factor
@@ -340,7 +348,7 @@ class HiddenMarkovModel:
 
         # Calculate Frobenius norm (for A and B) and L2 norm (for PI).
         norm = (np.linalg.norm(self.A - A) + np.linalg.norm(self.B - B) +
-                     np.linalg.norm(self.PI - PI))
+                np.linalg.norm(self.PI - PI))
 
         # Update matrices.
         self.PI = PI

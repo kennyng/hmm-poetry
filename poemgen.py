@@ -1,3 +1,10 @@
+##############################################################################
+# poemgen.py
+# ----------
+# Generate sonnets using the given Hidden Markov Model.
+#   - Supports iambic pentameter or rhyming (though not both, as of yet).
+##############################################################################
+
 import numpy as np
 
 import tokenizer

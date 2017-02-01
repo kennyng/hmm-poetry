@@ -1,3 +1,10 @@
+##############################################################################
+# tokenizer.py
+# -------------
+# Parses sonnet data (text file) into tokens for model training.
+#
+##############################################################################
+
 # Sonnets 99, 126, 145 removed due to format deviations.
 NUM_SHAKESPEARE_SONNETS = 151
 # SONNET FORMAT:

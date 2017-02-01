@@ -1,3 +1,10 @@
+##############################################################################
+# hmmhelper.py
+# ------------
+# Helper methods for training, saving, and loading Hidden Markov Models.
+#
+##############################################################################
+
 import os
 import pickle
 
@@ -173,69 +180,3 @@ def _load_lingual_dict(filename):
     with open(filename, 'rb') as fp:
         d = pickle.load(fp)
     return d
-
-
-##############################################################################
-# TEST, VERIFY, & VISUALIZE HIDDEN MARKOV MODELS
-##############################################################################
-def output_model_info(model_name):
-    A, B, PI, token_dict = load_hmm(model_name)
-    index_to_token = {index: token for token, index in token_dict.items()}
-
-    print(" Hidden Markov Model: {}".format(model_name))
-    print("=" * (len(model_name) + 23))
-
-    print("\nTOP STATE TRANSITIONS:")
-    top_transitions = rank_state_transitions(A)
-
-    print("\nTOP WORDS AT EACH STATE:")
-    top_words = rank_state_words(B, index_to_token)
-
-
-def rank_state_transitions(A):
-    """Generate list of state transitions with highest probability at each state."""
-    top_transitions = []
-    for i in range(len(A)):
-        probs = list(A[i])
-        max_prob = max(probs)
-        state = probs.index(max_prob)
-        top_transitions.append((state, max_prob))
-
-        print("Pr({}, {}) = {:.3f}".format(i + 1, state, max_prob))
-
-    return top_transitions
-
-
-def rank_state_words(B, index_to_token):
-    """Generate list of words with highest emission probability at each state."""
-    word_count = tokenizer.process_word_frequency()
-    B = _normalize_emission_data(B, index_to_token, word_count)
-    num_states = len(B)
-    top_words = []
-
-    for i in range(num_states):
-        emissions = list(B[i])
-        for j in range(len(emissions)):
-            emissions[j] = (emissions[j], j)
-
-        emissions = sorted(emissions)
-        words = emissions[::-1][0:10]
-        for k in range(len(words)):
-            words[k] = index_to_token[words[k][1]]
-        top_words.append(words)
-
-        # Print formatted list of top words.
-        print(" [{}]".format(i + 1))
-        print("-" * (len(str(i + 1)) + 2))
-        print(("{}\n" * len(words)).format(*words))
-
-    return top_words
-
-
-def _normalize_emission_data(B, index_to_token, word_count):
-    for i in range(len(B)):
-        for j in range(len(B[i])):
-            token = index_to_token[j]
-            count = word_count[token]
-            B[i][j] = B[i][j] / count
-    return B
