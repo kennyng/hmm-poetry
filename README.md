@@ -1,4 +1,4 @@
-## hmm-poetry
+## HMM Sonnet Generator
 
 Generate Shakespearean-like sonnets using hidden Markov models.
 - HMMs are trained using the [Baum-Welch (EM) algorithm](https://en.wikipedia.org/wiki/Baum–Welch_algorithm)
